@@ -5,6 +5,7 @@
 library(dplyr)
 library(stringr)
 library(lubridate)
+library(ggplot2)
 ## if statement
 ## unzip
 
@@ -130,6 +131,7 @@ harm <- types %>%
         coord_flip() + 
         theme_light()
 harm
+
 
 
 

@@ -8,10 +8,7 @@ output:
                 keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T, 
-                      cache = T)
-```
+
 
 # Summary
 This report contains a storm analysis. It answers two questions: 
@@ -24,7 +21,8 @@ After some data processing, the questions are answered by two bar chart visualis
 
 ## Loading necessary libraries
 
-```{r libraries, warning=FALSE}
+
+```r
 library(dplyr)
 library(stringr)
 library(lubridate)
@@ -37,7 +35,8 @@ library(ggplot2)
 
 If the data is not already in the working directory, it is downloaded from the correct URL.
 
-```{r downloading, warning=FALSE}
+
+```r
 filename <- 'storms.csv.bz2'
 if (!file.exists(filename)) {
   download.file('https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2', filename)
@@ -49,7 +48,8 @@ storms <- read.csv(filename)
 
 In the documentation on the dataset it was mentioned that the data was properly collected after 1996. This report focussed on data from 1996 and later. Therefore it was necessary to properly store the BGN_DATE variable. 
 
-```{r dates}
+
+```r
 storms <- storms %>%
         mutate(begin_date_char = as.character(storms$BGN_DATE)) %>%
         mutate(begin_date_nchar = nchar(begin_date_char)) %>%
@@ -64,10 +64,43 @@ storms <- storms %>%
 
 After correcting the date variable it was possible to filter the data to 1996 and later.
 
-```{r}
+
+```r
 storms1996 <- filter(storms, begin_date_year >= 1996)
 range(storms1996$begin_date)
+```
+
+```
+## [1] "1996-01-01" "1999-12-31"
+```
+
+```r
 sapply(storms1996, function(x) sum(is.na(x)))
+```
+
+```
+##          STATE__         BGN_DATE         BGN_TIME        TIME_ZONE 
+##                0                0                0                0 
+##           COUNTY       COUNTYNAME            STATE           EVTYPE 
+##                0                0                0                0 
+##        BGN_RANGE          BGN_AZI       BGN_LOCATI         END_DATE 
+##                0                0                0                0 
+##         END_TIME       COUNTY_END       COUNTYENDN        END_RANGE 
+##                0                0           120954                0 
+##          END_AZI       END_LOCATI           LENGTH            WIDTH 
+##                0                0                0                0 
+##                F              MAG       FATALITIES         INJURIES 
+##           115827                0                0                0 
+##          PROPDMG       PROPDMGEXP          CROPDMG       CROPDMGEXP 
+##                0                0                0                0 
+##              WFO       STATEOFFIC        ZONENAMES         LATITUDE 
+##                0                0                0                0 
+##        LONGITUDE       LATITUDE_E       LONGITUDE_          REMARKS 
+##                0                0                0                0 
+##           REFNUM  begin_date_char begin_date_nchar       begin_date 
+##                1                0                0                0 
+##  begin_date_year 
+##                0
 ```
 
 ### Revalue and combining damages & combining harm
@@ -82,7 +115,8 @@ In order to analyse the damages the damages were multiplied by the magnitude for
 
 The harmful impact on the population was reported in the dataset by two variables, INJURIES & FATALITIES. In order to analyse the harm inflicted by the types of events, the two variables were added together. 
 
-```{r}
+
+```r
 storms1996dmg <- storms1996 %>%
         mutate(PROPDMGEXPnum = 1) %>%
         mutate(CROPDMGEXPnum = 1) %>%
@@ -96,14 +130,14 @@ storms1996dmg <- storms1996 %>%
         mutate(CROPDMGtotal = CROPDMG * CROPDMGEXPnum) %>%
         mutate(DMGtotal = PROPDMGtotal + CROPDMGtotal) %>%
         mutate(HARMEDtotal = INJURIES + FATALITIES)
-
 ```
 
 ### Grouping damages and harming impact by event type
 
 To assess damages and harm in relation to the types of events, the dataset was grouped by the event type. For the damages and harm the sum was summarized in this group by.
 
-```{r grouping by type, warning=FALSE}
+
+```r
 types <- storms1996dmg %>%
         group_by(EVTYPE) %>%
         summarize(DMG_SUM = sum(DMGtotal),
@@ -116,7 +150,8 @@ types <- storms1996dmg %>%
 
 The barchart below shows that floods are the most harmful with respect to the population health.
 
-```{r results question 1}
+
+```r
 harm <- types %>%
         top_n(n = 5, wt = HARMED_SUM) %>%
         ggplot(aes(y = HARMED_SUM, x = reorder(x = EVTYPE, X = HARMED_SUM), fill=EVTYPE)) +
@@ -128,11 +163,14 @@ harm <- types %>%
 harm
 ```
 
+![](Storm_analysis_files/figure-html/results question 1-1.png)<!-- -->
+
 ### Question 2: Across the United States, which types of events have the greatest economic consequences?
 
 The barchart below shows that hurricanes have the greatest economic consequences. 
 
-```{r results question 2}
+
+```r
 damage <- types %>%
         top_n(n = 5, wt = DMG_SUM) %>%
         ggplot(aes(y = DMG_SUM, x = reorder(x = EVTYPE, X = DMG_SUM), fill=EVTYPE)) +
@@ -143,4 +181,6 @@ damage <- types %>%
         theme_light()
 damage
 ```
+
+![](Storm_analysis_files/figure-html/results question 2-1.png)<!-- -->
 
